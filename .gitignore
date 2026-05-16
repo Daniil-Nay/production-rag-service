@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+data/corpus/*
+!data/corpus/.gitkeep
+!data/corpus/README.md
+data/bm25_index.pkl
+logs/
+.DS_Store
