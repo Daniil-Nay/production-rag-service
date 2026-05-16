@@ -1,0 +1,5 @@
+{"query": "Что такое RAG?", "relevant_doc_ids": [1]}
+{"query": "Какие есть стратегии chunking'а?", "relevant_doc_ids": [2]}
+{"query": "Когда reranker не нужен?", "relevant_doc_ids": [3]}
+{"query": "Как защититься от prompt injection?", "relevant_doc_ids": [5]}
+{"query": "Что такое hybrid retrieval?", "relevant_doc_ids": [2, 4]}
