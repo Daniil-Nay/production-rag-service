@@ -14,21 +14,29 @@ def get_conn() -> psycopg.Connection:
     return conn
 
 
+def _ensure_extension() -> None:
+    """Create the pgvector extension. Runs on a bare connection because
+    get_conn() calls register_vector(), which requires the type to already exist."""
+    with psycopg.connect(settings.pg_dsn) as conn, conn.cursor() as cur:
+        cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        conn.commit()
+
+
 def init_schema() -> None:
     """Create the table and HNSW index. Idempotent."""
+    _ensure_extension()
     with get_conn() as conn, conn.cursor() as cur:
-        cur.execute("CREATE EXTENSION IF NOT EXISTS vector")
+        dim = int(settings.embed_dimension)
         cur.execute(
-            """
+            f"""
             CREATE TABLE IF NOT EXISTS chunks (
                 id          serial PRIMARY KEY,
                 doc_id      integer NOT NULL,
                 text        text    NOT NULL,
-                embedding   vector(%s) NOT NULL,
-                meta        jsonb   NOT NULL DEFAULT '{}'::jsonb
+                embedding   vector({dim}) NOT NULL,
+                meta        jsonb   NOT NULL DEFAULT '{{}}'::jsonb
             )
-            """,
-            (settings.embed_dimension,),
+            """
         )
         cur.execute(
             """
