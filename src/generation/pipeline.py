@@ -64,7 +64,14 @@ def answer_question(query: str, llm: LLMClient) -> RAGResponse:
 
     # post-hoc verification
     citations_typed = [Citation(c.doc_id, c.quote) for c in raw.citations]
-    context_map = {c["doc_id"]: c["text"] for c in chunks}
+    # Aggregate ALL chunk texts per doc_id: one doc_id can span several retrieved
+    # chunks (the unique key is chunk_id, but the model cites doc_id), so a valid
+    # quote may come from any of them. A plain {doc_id: text} dict would keep only
+    # the last chunk and falsely flag quotes from earlier chunks of the same doc.
+    context_map: dict[int, str] = {}
+    for c in chunks:
+        did = c["doc_id"]
+        context_map[did] = f"{context_map[did]}\n{c['text']}" if did in context_map else c["text"]
     ok, invalid = verify_citations(citations_typed, context_map)
     invalid_models = [CitationModel(doc_id=c.doc_id, quote=c.quote) for c in invalid]
 

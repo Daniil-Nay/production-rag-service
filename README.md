@@ -13,7 +13,7 @@ User → FastAPI /ask
    hybrid retrieval        dense (pgvector) + sparse (BM25)
         │
         ▼  RRF fusion
-   reranker (optional)     cross-encoder top-K refinement
+   reranker (optional)     cross-encoder refinement — extension, not wired here
         │
         ▼  top-5 chunks
    LLM generation          prompt enforces inline citations
@@ -79,7 +79,7 @@ Two design decisions worth calling out:
 
 ```bash
 cp .env.example .env
-# edit .env: set LLM_API_KEY and (optionally) LLM_BASE_URL / LLM_MODEL
+# edit .env: set LLM_API_KEY and (optionally) LLM_BASE_URL / LLM_MODEL_PRIMARY
 
 docker-compose up --build
 ```
@@ -89,7 +89,7 @@ After startup: pgvector on `localhost:5432`, the service on `localhost:8000`.
 ### 2. Index a corpus
 
 ```bash
-# put .txt / .md documents into data/corpus/
+# put .txt documents into data/corpus/
 docker-compose exec service python -m src.indexing --corpus-dir /app/data/corpus
 ```
 
@@ -134,12 +134,12 @@ pytest tests/ -v
 
 Left unimplemented on purpose, to keep the core readable rather than to hide work:
 
-- Cross-encoder reranker — interface is present in the pipeline, wiring is left out.
-- Embedding cache — placeholder in `embedder.py`.
+- Cross-encoder reranker — covered in the course (reranking module); not wired into this minimal reference. Add it as a rerank step between hybrid retrieval and generation in `pipeline.py`.
+- Embedding-result cache — not implemented. Only the model loader is cached (`@lru_cache`); per-query embeddings are recomputed.
 - SSE streaming responses and any frontend.
-- Rate limiting — primitives live in `security/`, not yet attached to the API.
+- Rate limiting — not implemented. A `rate_limit_per_minute` config field exists but is unused; no middleware is attached to the API.
 
-These are extension points, not unknowns; each has a defined seam in the code.
+These are deliberate extension points, not hidden work.
 
 ## Notes
 
