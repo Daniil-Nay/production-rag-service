@@ -8,18 +8,25 @@ LLM classifier.
 import re
 
 
+# Building blocks. The override verbs ("ignore"/"disregard"/"forget") can be followed
+# by several stacked qualifiers before the noun — the textbook string is "ignore ALL
+# PREVIOUS instructions", with both a quantifier and a position word — so allow 1..3 of
+# them rather than exactly one.
+_SCOPE = r"(?:all|the|any|every|previous|prior|above|preceding|earlier|initial|original)"
+_TARGET = r"(?:instructions?|prompts?|messages?|directions?|rules?|guidelines?|context|commands?)"
+
 # Patterns commonly seen in injection attempts
 INJECTION_PATTERNS = [
-    r"\bignore\s+(previous|prior|above|all)\s+(instructions?|prompts?)\b",
-    r"\bforget\s+(everything|previous|all\s+(instructions?|prompts?))\b",
-    r"\bdisregard\s+(previous|prior|all|the)\s+(instructions?|prompts?)\b",
-    r"\bnew\s+instructions?:\s*",
+    rf"\bignore\s+(?:{_SCOPE}\s+){{1,3}}{_TARGET}\b",
+    rf"\bdisregard\s+(?:{_SCOPE}\s+){{1,3}}{_TARGET}\b",
+    rf"\bforget\s+(?:everything\b|(?:{_SCOPE}\s+){{1,3}}{_TARGET}\b)",
+    r"\bnew\s+instructions?\s*:",
     r"\bsystem\s*:\s*",
-    r"\b(you\s+are\s+now|act\s+as)\s+",
+    r"\b(?:you\s+are\s+now|act\s+as|pretend\s+to\s+be)\b",
     # Russian-language variants
-    r"\b(забудь|игнорируй|отмени)\s+(всё|все|предыдущие|инструкции|команды)\b",
-    r"\bты\s+теперь\s+",
-    r"\bновые\s+инструкции:\s*",
+    r"\b(?:забудь|игнорируй|проигнорируй|отмени)\s+(?:всё|все|предыдущие|прежние|инструкции|команды|указания)\b",
+    r"\bты\s+теперь\b",
+    r"\bновые\s+инструкции\s*:",
 ]
 
 

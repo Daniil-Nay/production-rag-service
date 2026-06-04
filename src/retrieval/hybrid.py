@@ -1,9 +1,15 @@
 """Hybrid retrieval: dense + BM25 fused with Reciprocal Rank Fusion (RRF)."""
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 from src.config import settings
-from src.retrieval.bm25 import BM25Index
-from src.retrieval.embedder import embed_query
-from src.retrieval.vector_store import search_dense
+
+if TYPE_CHECKING:
+    # Imported only for type hints. Keeping it out of the runtime import graph
+    # means rrf_fuse (and the smoke tests) don't pull in rank_bm25.
+    from src.retrieval.bm25 import BM25Index
 
 
 def rrf_fuse(rankings: list[list[str]], k: int = 60) -> list[tuple[str, float]]:
@@ -18,6 +24,11 @@ def rrf_fuse(rankings: list[list[str]], k: int = 60) -> list[tuple[str, float]]:
 
 def hybrid_search(query: str, bm25: BM25Index | None = None) -> list[dict]:
     """Hybrid retrieval. Returns the top-k_final chunks with extra scoring info."""
+    # Heavy deps (sentence-transformers, psycopg/pgvector) are imported here, not at
+    # module load, so the pure-logic helpers above stay importable without the ML/DB stack.
+    from src.retrieval.embedder import embed_query
+    from src.retrieval.vector_store import search_dense
+
     dense_results = search_dense(embed_query(query), settings.top_k_dense)
 
     if bm25 is None:
